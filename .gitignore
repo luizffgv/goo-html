@@ -1,0 +1,11 @@
+# Compiled files
+dist/
+
+# Generated types
+types/
+
+# NPM Dependencies
+node_modules/
+
+# TypeScript build info
+*.tsbuildinfo
