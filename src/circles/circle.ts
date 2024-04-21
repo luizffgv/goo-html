@@ -1,3 +1,5 @@
+import FrameRequestHelper from "../frame-request-helper.js";
+
 /** Parameters for the {@link Circle} constructor. */
 export interface CircleParameters {
   /** Horizontal position of the circle. */
@@ -16,8 +18,18 @@ export interface CircleParameters {
 export class Circle {
   /** Circle radius. */
   #radius: number = 0;
-  /** Animation frame handler for the radius transition. */
-  #radiusTransitionID?: number | undefined;
+  /** Interpolates from the current radius to the target radius. */
+  #radiusInterpolator = new FrameRequestHelper<{ targetRadius: number }>(
+    ({ deltaTime, data: { targetRadius } }) => {
+      if (Math.abs(targetRadius - this.#radius) > 1) {
+        this.#radius +=
+          ((targetRadius - this.#radius) / 1000) * Math.min(1000, deltaTime);
+      } else {
+        this.#radius = targetRadius;
+        this.#radiusInterpolator.stop();
+      }
+    },
+  );
 
   /**
    * Sets the new radius of the circle. The circle will gradually transition to
@@ -25,27 +37,8 @@ export class Circle {
    * @param targetRadius - New radius of the circle.
    */
   set radius(targetRadius: number) {
-    if (this.#radiusTransitionID != null) {
-      cancelAnimationFrame(this.#radiusTransitionID);
-      this.#radiusTransitionID = undefined;
-    }
-
-    // Slowly interpolate the circle's radius from the current radius to the
-    // target radius.
-    let lastTimestamp: number | undefined;
-    const radiusTransition = (timestamp: number): void => {
-      const dt = timestamp - (lastTimestamp ?? timestamp);
-      lastTimestamp = timestamp;
-
-      if (Math.abs(targetRadius - this.#radius) > 1) {
-        this.#radius +=
-          ((targetRadius - this.#radius) / 1000) * Math.min(1000, dt);
-        this.#radiusTransitionID = requestAnimationFrame(radiusTransition);
-      } else {
-        this.#radius = targetRadius;
-      }
-    };
-    this.#radiusTransitionID = requestAnimationFrame(radiusTransition);
+    this.#radiusInterpolator.stop();
+    this.#radiusInterpolator.start({ targetRadius });
   }
 
   /**
