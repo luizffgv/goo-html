@@ -35,8 +35,10 @@ export class FrameRequestHelper {
 
       this.#lastTimestamp = timestamp;
 
-      this.#callback({ timestamp, deltaTime });
+      // The next animation frame is requested before callback runs, so that the
+      // callback itself can cancel it by using the instance methods.
       this.#requestID = requestAnimationFrame(callback);
+      this.#callback({ timestamp, deltaTime });
     };
 
     this.#requestID = requestAnimationFrame(callback);
